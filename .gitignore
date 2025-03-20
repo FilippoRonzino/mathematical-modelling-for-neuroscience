@@ -176,3 +176,6 @@ cython_debug/
 
 # Ignore Neurodata Without Borders files
 *.nwb
+
+# Ignore ds_store files
+.DS_Store
