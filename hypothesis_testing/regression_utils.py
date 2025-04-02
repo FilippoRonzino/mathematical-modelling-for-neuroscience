@@ -58,7 +58,7 @@ def fit_and_test_models(X, y, unit_id, area, covariate, plot=False):
     if plot:
         # Plot linear fit
         plt.figure(figsize=(6, 4))
-        plt.scatter(X, y, color='blue', alpha=0.5, label='Data')
+        plt.scatter(X, y, alpha=0.5, label='Data')
         plt.plot(X, y_pred_linear, color='red', label=f'Linear fit (R²={r2_linear:.3f})')
         plt.xlabel(f'{covariate}')
         plt.ylabel('spikes_per_second')
@@ -69,7 +69,7 @@ def fit_and_test_models(X, y, unit_id, area, covariate, plot=False):
         
         # Plot sinusoidal fit
         plt.figure(figsize=(6, 4))
-        plt.scatter(X, y, color='blue', alpha=0.5, label='Data')
+        plt.scatter(X, y, alpha=0.5, label='Data')
         sort_idx = np.argsort(X)
         plt.plot(X[sort_idx], y_pred_sin[sort_idx], color='red', 
                  label=f'Sinusoidal fit (p-value={p_value_sin:.3f})')
