@@ -56,10 +56,16 @@ def fit_and_test_models(X, y, unit_id, area, covariate, plot=False):
     p_value_sin = 1 - stats.f.cdf(f_stat, 2, n-3)
     
     if plot:
+        # Calculate mean y for each unique x value
+        df = pd.DataFrame({'x': X, 'y': y})
+        means = df.groupby('x')['y'].mean().reset_index()
+        
         # Plot linear fit
         plt.figure(figsize=(6, 4))
         plt.scatter(X, y, alpha=0.5, label='Data')
-        plt.plot(X, y_pred_linear, color='red', label=f'Linear fit (R²={r2_linear:.3f})')
+        plt.plot(X, y_pred_linear, color='red', label=f'Linear fit (p-value={p_value_linear:.3f})')
+        plt.scatter(means['x'], means['y'], color='green', s=100, marker='s', 
+                   label='Mean values', zorder=3)
         plt.xlabel(f'{covariate}')
         plt.ylabel('spikes_per_second')
         plt.title(f'Linear Regression: unit {unit_id}, area {area}')
@@ -73,6 +79,8 @@ def fit_and_test_models(X, y, unit_id, area, covariate, plot=False):
         sort_idx = np.argsort(X)
         plt.plot(X[sort_idx], y_pred_sin[sort_idx], color='red', 
                  label=f'Sinusoidal fit (p-value={p_value_sin:.3f})')
+        plt.scatter(means['x'], means['y'], color='green', s=100, marker='s', 
+                   label='Mean values', zorder=3)
         plt.xlabel(f'{covariate}')
         plt.ylabel('spikes_per_second')
         plt.title(f'Sinusoidal Regression: unit {unit_id}, area {area}')
