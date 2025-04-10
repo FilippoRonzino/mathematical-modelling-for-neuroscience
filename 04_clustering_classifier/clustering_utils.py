@@ -38,6 +38,7 @@ def plot_feature_space(dataset: pd.DataFrame, x_col:str = 'temporal_frequency',
     plt.xlabel(x_col)
     plt.ylabel(y_col)
     plt.show()
+
 def apply_kmeans_clustering(dataset: pd.DataFrame, n_clusters: int, x_col: str = 'temporal_frequency', 
                             y_col: str = 'orientation', random_state: int = 42) -> pd.DataFrame:
     """
@@ -264,22 +265,3 @@ def compare_with_baseline(results: dict) -> dict:
             print("✅ Model is performing better than the baseline.\n")
 
     return summary
-
-def determine_active(group: pd.DataFrame) -> int:
-    """
-    Determines if a group of units is active based on the percentage of units 
-    that have a spike rate above a certain threshold.
-    
-    Parameters:
-    - group: DataFrame containing spike data for a specific area and stimulus.
-
-    Returns:
-    - 1 if the percentage of active units is >= 30%, else 0.
-    """
-    total_units = group['unit_id'].nunique()  
-    active_units = group[group['spikes_per_second'] > 10]['unit_id'].nunique()  
-    
-    if total_units == 0:
-        return 0
-    
-    return 1 if (active_units / total_units) * 100 >= 30 else 0
