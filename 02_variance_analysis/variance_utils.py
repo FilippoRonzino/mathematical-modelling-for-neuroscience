@@ -185,6 +185,7 @@ def plot_unit_spikes_per_second(dataset: pd.DataFrame, unit: int, frequency: str
 
     plt.figure(figsize=(10, 5))
     sns.scatterplot(x=spikes_dataset[frequency], y=spikes_dataset['orientation'], hue=spikes_dataset['spikes_per_second'], palette='Reds', size=spikes_dataset['spikes_per_second'], sizes=(20, 200))
+    plt.xscale('log')
     plt.title(f'Spikes per second for unit {unit} in area {get_unit_area(dataset, unit)}')
     plt.legend(bbox_to_anchor=(1.01, 1), title='Spikes per second', loc='upper left')
     plt.show()
@@ -203,6 +204,7 @@ def plot_area_spikes_per_second(dataset: pd.DataFrame, area: str, frequency: str
 
     plt.figure(figsize=(10, 5))
     sns.scatterplot(x=spikes_dataset[frequency], y=spikes_dataset['orientation'], hue=spikes_dataset['spikes_per_second'], palette='Reds', size=spikes_dataset['spikes_per_second'], sizes=(20, 200))
+    plt.xscale('log')
     plt.title(f'Spikes per second for units in area {area}')
     plt.legend(bbox_to_anchor=(1.01, 1), title='Spikes per second', loc='upper left')
     plt.show()
