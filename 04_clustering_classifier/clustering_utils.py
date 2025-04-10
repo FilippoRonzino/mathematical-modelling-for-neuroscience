@@ -1,26 +1,20 @@
 import math
 import warnings
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import xgboost as xgb
 from sklearn.cluster import AgglomerativeClustering, KMeans
-from sklearn.dummy import DummyClassifier
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
-    confusion_matrix,
-    roc_auc_score,
-)
+from sklearn.dummy import DummyRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-def plot_feature_space(dataset: pd.DataFrame, x_col:str = 'temporal_frequency', 
-                       y_col:str = 'orientation', figsize: tuple = (12, 4), 
-                       title:str = 'Feature Space'):
+def plot_feature_space(dataset: pd.DataFrame, x_col: str = 'temporal_frequency', 
+                       y_col: str = 'orientation', figsize: tuple = (12, 4), 
+                       title: str = 'Feature Space'):
     """
-    Plots a scatterplot of the feature space.
+    Plots a scatterplot of the feature space with a log scale on the x-axis.
 
     Parameters:
     - dataset: dataset containing the data.
@@ -34,11 +28,11 @@ def plot_feature_space(dataset: pd.DataFrame, x_col:str = 'temporal_frequency',
     """
     plt.figure(figsize=figsize)
     sns.scatterplot(x=dataset[x_col], y=dataset[y_col])
+    plt.xscale('log')  
     plt.title(title)
     plt.xlabel(x_col)
     plt.ylabel(y_col)
     plt.show()
-
 def apply_kmeans_clustering(dataset: pd.DataFrame, n_clusters: int, x_col: str = 'temporal_frequency', 
                             y_col: str = 'orientation', random_state: int = 42) -> pd.DataFrame:
     """
@@ -61,6 +55,7 @@ def apply_kmeans_clustering(dataset: pd.DataFrame, n_clusters: int, x_col: str =
     plt.figure(figsize=(12, 4))
     sns.scatterplot(x=dataset[x_col], y=dataset[y_col], hue=dataset['KMeans_Cluster'],
                     palette='viridis', legend=False)
+    plt.xscale('log')  
     plt.title('K-Means Clustering')
     plt.show()
 
@@ -86,6 +81,7 @@ def apply_hierarchical_clustering(dataset: pd.DataFrame, n_clusters: int, x_col:
     plt.figure(figsize=(12, 4))
     sns.scatterplot(x=dataset[x_col], y=dataset[y_col], hue=dataset['Hierarchical_Cluster'],
                     palette='coolwarm', legend=False)
+    plt.xscale('log')  
     plt.title('Hierarchical Clustering')
     plt.show()
 
@@ -122,27 +118,23 @@ def plot_area_cluster_heatmaps(dataset: pd.DataFrame, area_col: str = 'area', km
     plt.tight_layout()
     plt.show()
 
-def train_area_models(dataset: pd.DataFrame, features: list, label_col: str = 'active', area_col: str = 'area', 
-                      test_size: float = 0.2, random_state: int = 10)  -> tuple:
+def train_area_models_regressor(dataset: pd.DataFrame, features: list, label_col: str = 'proportion_active_units', area_col: str = 'area', 
+                                test_size: float = 0.2, random_state: int = 10) -> tuple:
     """
-    Trains XGBoost models per area and returns models, results, and a fitted LabelEncoder.
-
+    Trains a regression model for each area in the dataset.
     Parameters:
-    - dataset: pandas DataFrame containing the data.
-    - features: List of feature column names to be used in training the model.
-    - label_col: Name of the column containing the target variable (default is 'active').
-    - area_col: Name of the column containing the area labels (default is 'area').
-    - test_size: Proportion of the dataset to include in the test split (default is 0.2).
-    - random_state: Random seed for reproducibility (default is 10).
-
+    - dataset: DataFrame containing the data.
+    - features: List of feature columns to use for training.
+    - label_col: Column name for the target variable.
+    - area_col: Column name for the area.
+    - test_size: Proportion of the dataset to include in the test split.
+    - random_state: Random seed for reproducibility.
     Returns:
-    - models (dict): A dictionary mapping each area to its corresponding trained XGBoost model.
-    - results (dict): A dictionary mapping each area to a dictionary containing 'X_test', 'Y_test', and 'Y_pred'.
-    - label_encoder: A fitted LabelEncoder used to encode the target variable.
+    - models: Dictionary of trained models for each area.
+    - results: Dictionary containing test data and predictions for each area.
     """
     models = {}
     results = {}
-    label_encoder = LabelEncoder()
 
     for area, group in dataset.groupby(area_col):
         print(f"Training model for area: {area}")
@@ -150,22 +142,15 @@ def train_area_models(dataset: pd.DataFrame, features: list, label_col: str = 'a
         X = group[features]
         Y = group[label_col]
 
-        # Skip if only one class is present
         if Y.nunique() < 2:
-            print(f"Skipping area {area} — only one class present: {Y.unique()}")
-            continue
-
-        # Check if each class has at least two samples for stratification
-        if Y.value_counts().min() < 2:
-            print(f"Skipping area {area} — insufficient samples for stratified split (class counts: {Y.value_counts().to_dict()})")
+            print(f"Area {area} skipped due to all equal values: {Y.unique()}")
             continue
 
         X_train, X_test, Y_train, Y_test = train_test_split(
-            X, Y, test_size=test_size, random_state=random_state, stratify=Y
+            X, Y, test_size=test_size, random_state=random_state
         )
-        label_encoder.fit(Y_train)
 
-        model = xgb.XGBClassifier(n_estimators=100, random_state=random_state)
+        model = xgb.XGBRegressor(n_estimators=100, random_state=random_state)
         model.fit(X_train, Y_train)
 
         Y_pred = model.predict(X_test)
@@ -177,69 +162,72 @@ def train_area_models(dataset: pd.DataFrame, features: list, label_col: str = 'a
             'Y_pred': Y_pred
         }
 
-    return models, results, label_encoder
+    return models, results
 
-def evaluate_and_plot_results(results: dict, label_encoder: LabelEncoder, n_cols: int = 3, figsize_per_plot: int = 6)  -> None:
+def evaluate_and_plot_results(results: dict, n_cols: int = 3, figsize_per_plot: int = 6) -> None:
     """
-    Evaluates classification results per area and visualizes confusion matrices.
-
+    Evaluates regression metrics and plots the results for each area.
     Parameters:
-    - results: dict of evaluation results per area. Each entry must contain 'X_test', 'Y_test', and 'Y_pred'.
-    - label_encoder: A fitted LabelEncoder instance used for axis tick labels in confusion matrices.
-    - n_cols: Number of columns in the subplot grid (default is 3).
-    - figsize_per_plot: Scale factor for each subplot in inches (default is 6).
+    - results: dict containing 'X_test', 'Y_test', and 'Y_pred' for each area.
+    - n_cols: Number of columns for the plot grid.
+    - figsize_per_plot: Size of each subplot.
+    Returns:
+    - None (displays the plots).
     """
-    warnings.filterwarnings('ignore')  # suppress sklearn warnings like undefined metrics
-
+    warnings.filterwarnings('ignore')  
     areas = list(results.keys())
     num_areas = len(areas)
-
     n_rows = math.ceil(num_areas / n_cols)
+    
     fig, axs = plt.subplots(n_rows, n_cols, figsize=(n_cols * figsize_per_plot, n_rows * figsize_per_plot))
-    axs = axs.flatten() if num_areas > 1 else [axs]
+    if num_areas == 1:
+        axs = [axs]
+    else:
+        axs = axs.flatten()
 
     for idx, area in enumerate(areas):
         res = results[area]
         Y_test = res['Y_test']
         Y_pred = res['Y_pred']
 
-        accuracy = accuracy_score(Y_test, Y_pred)
-        class_report = classification_report(Y_test, Y_pred)
-        conf_matrix = confusion_matrix(Y_test, Y_pred)
+        mse = mean_squared_error(Y_test, Y_pred)
+        rmse = math.sqrt(mse)
+        mae = mean_absolute_error(Y_test, Y_pred)
+        r2 = r2_score(Y_test, Y_pred)
 
-        print(f"Classification Report for Area: {area}\n{class_report}\n")
+        print(f"Regression Metrics: {area}")
+        print(f"  Mean Squared Error (MSE): {mse:.4f}")
+        print(f"  Root Mean Squared Error (RMSE): {rmse:.4f}")
+        print(f"  Mean Absolute Error (MAE): {mae:.4f}")
+        print(f"  R^2 Score: {r2:.4f}\n")
 
         ax = axs[idx]
-        sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
-                    xticklabels=label_encoder.classes_, yticklabels=label_encoder.classes_,
-                    ax=ax)
-        ax.set_xlabel('Predicted')
-        ax.set_ylabel('Actual')
+        ax.scatter(Y_test, Y_pred, alpha=0.7, label="Predizioni")
 
-        title_text = f"Area: {area}\nAccuracy: {accuracy:.4f}"
-        if len(label_encoder.classes_) == 2:
-            try:
-                auc_score = roc_auc_score(Y_test, Y_pred)
-                title_text += f" | ROC-AUC: {auc_score:.4f}"
-            except Exception:
-                pass
-        ax.set_title(title_text)
+        min_val = min(min(Y_test), min(Y_pred))
+        max_val = max(max(Y_test), max(Y_pred))
+        ax.plot([min_val, max_val], [min_val, max_val], '--', color='red', label="Predizione Perfetta")
 
-    # Remove unused subplots
+        ax.set_title(f"Area: {area}\nMSE: {mse:.4f} | RMSE: {rmse:.4f}\nMAE: {mae:.4f} | R²: {r2:.4f}")
+        ax.set_xlabel("Real Values")
+        ax.set_ylabel("Predicted Values")
+        ax.legend()
+
     for j in range(idx + 1, len(axs)):
         fig.delaxes(axs[j])
 
     plt.tight_layout()
     plt.show()
+
 def compare_with_baseline(results: dict) -> dict:
     """
-    Compares model accuracy with a baseline (most frequent class) per area.
+    Compares model performance with a baseline regressor that predicts the mean of the target variable per area.
 
     Parameters:
     - results: dict containing 'X_test', 'Y_test', and 'Y_pred' for each area.
 
     Returns:
-    - summary: dict with model and baseline accuracy for each area.
+    - summary: dict with model and baseline Mean Absolute Error (MAE) for each area.
     """
     summary = {}
 
@@ -248,18 +236,18 @@ def compare_with_baseline(results: dict) -> dict:
         Y_test = res['Y_test']
         Y_pred = res['Y_pred']
 
-        model_accuracy = accuracy_score(Y_test, Y_pred)
+        model_mae = mean_absolute_error(Y_test, Y_pred)
 
-        dummy_clf = DummyClassifier(strategy='most_frequent')
-        dummy_clf.fit(X_test, Y_test)
-        Y_dummy_pred = dummy_clf.predict(X_test)
-        dummy_accuracy = accuracy_score(Y_test, Y_dummy_pred)
+        dummy_reg = DummyRegressor(strategy='mean')
+        dummy_reg.fit(X_test, Y_test)
+        Y_dummy_pred = dummy_reg.predict(X_test)
+        baseline_mae = mean_absolute_error(Y_test, Y_dummy_pred)
 
         print(f"Area: {area}")
-        print(f"Model Accuracy: {model_accuracy:.4f}")
-        print(f"Baseline (Most Frequent Class) Accuracy: {dummy_accuracy:.4f}")
+        print(f"Model MAE: {model_mae:.4f}")
+        print(f"Baseline (Mean Predictor) MAE: {baseline_mae:.4f}")
 
-        if model_accuracy <= dummy_accuracy + 0.01:
+        if model_mae >= baseline_mae - 0.01: 
             print("⚠️ Warning: Model is not performing better than the baseline.\n")
         else:
             print("✅ Model is performing better than the baseline.\n")
