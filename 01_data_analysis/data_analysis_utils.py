@@ -71,7 +71,12 @@ def determine_percentage_active_units_by_area(unit_data: pd.DataFrame):
     """
     active_units = unit_data.groupby(['area', 'stimulus_presentation_id'])['active'].mean().reset_index()
     active_units.rename(columns={'active': 'proportion_active_units'}, inplace=True)
-    stimulus_info = unit_data[['stimulus_presentation_id', 'temporal_frequency', 'orientation']].drop_duplicates()
+    if 'temporal_frequency' in unit_data.columns:
+        stimulus_info = unit_data[['stimulus_presentation_id', 'temporal_frequency', 'orientation']].drop_duplicates()
+    elif 'spatial_frequency' in unit_data.columns:
+        stimulus_info = unit_data[['stimulus_presentation_id', 'spatial_frequency', 'orientation']].drop_duplicates()
+    else:   
+        raise ValueError("No valid stimulus frequency (spatial or temporal) column found in unit data.")
     active_units = active_units.merge(stimulus_info, on='stimulus_presentation_id', how='left')
 
     return active_units
