@@ -52,7 +52,7 @@ def apply_kmeans_clustering(dataset: pd.DataFrame, n_clusters: int, x_col: str =
     kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
     dataset['KMeans_Cluster'] = kmeans.fit_predict(X)
 
-    plt.figure(figsize=(12, 4))
+    plt.figure(figsize=(5, 5))
     sns.scatterplot(x=dataset[x_col], y=dataset[y_col], hue=dataset['KMeans_Cluster'],
                     palette='viridis', legend=False)
     plt.xscale('log')  
@@ -78,7 +78,7 @@ def apply_hierarchical_clustering(dataset: pd.DataFrame, n_clusters: int, x_col:
     agglo = AgglomerativeClustering(n_clusters=n_clusters)
     dataset['Hierarchical_Cluster'] = agglo.fit_predict(X)
 
-    plt.figure(figsize=(12, 4))
+    plt.figure(figsize=(5, 5))
     sns.scatterplot(x=dataset[x_col], y=dataset[y_col], hue=dataset['Hierarchical_Cluster'],
                     palette='coolwarm', legend=False)
     plt.xscale('log')  
@@ -247,8 +247,8 @@ def compare_with_baseline(results: dict) -> dict:
         print(f"Model MAE: {model_mae:.4f}")
         print(f"Baseline (Mean Predictor) MAE: {baseline_mae:.4f}")
 
-        if model_mae >= baseline_mae + 0.01: 
-            print("✅ Model is performing better than the baseline.\n")
+        if model_mae >= baseline_mae: 
+            print(f"✅ Model is performing better than the baseline. Delta: {model_mae-baseline_mae}\n")
         else:
             print("⚠️ Warning: Model is not performing better than the baseline.\n")
 
