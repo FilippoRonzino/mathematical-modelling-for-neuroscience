@@ -183,7 +183,7 @@ def plot_unit_spikes_per_second(dataset: pd.DataFrame, unit: int, frequency: str
     filtered_dataset = dataset.loc[dataset['unit_id'] == unit]
     spikes_dataset = filtered_dataset.groupby(['orientation', frequency]).mean(numeric_only=True).reset_index().drop(columns=['stimulus_presentation_id'])
 
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(5, 5))
     sns.scatterplot(x=spikes_dataset[frequency], y=spikes_dataset['orientation'], hue=spikes_dataset['spikes_per_second'], palette='Reds', size=spikes_dataset['spikes_per_second'], sizes=(20, 200))
     plt.xscale('log')
     plt.title(f'Spikes per second for unit {unit} in area {get_unit_area(dataset, unit)}')
@@ -202,7 +202,7 @@ def plot_area_spikes_per_second(dataset: pd.DataFrame, area: str, frequency: str
     filtered_dataset = dataset.loc[dataset['area'] == area]
     spikes_dataset = filtered_dataset.groupby(['orientation', frequency]).mean(numeric_only=True).reset_index().drop(columns=['stimulus_presentation_id', 'unit_id'])
 
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(5, 5))
     sns.scatterplot(x=spikes_dataset[frequency], y=spikes_dataset['orientation'], hue=spikes_dataset['spikes_per_second'], palette='Reds', size=spikes_dataset['spikes_per_second'], sizes=(20, 200))
     plt.xscale('log')
     plt.title(f'Spikes per second for units in area {area}')

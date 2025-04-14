@@ -202,11 +202,11 @@ def evaluate_and_plot_results(results: dict, n_cols: int = 3, figsize_per_plot: 
         print(f"  R^2 Score: {r2:.4f}\n")
 
         ax = axs[idx]
-        ax.scatter(Y_test, Y_pred, alpha=0.7, label="Predizioni")
+        ax.scatter(Y_test, Y_pred, alpha=0.7, label="Prediction")
 
         min_val = min(min(Y_test), min(Y_pred))
         max_val = max(max(Y_test), max(Y_pred))
-        ax.plot([min_val, max_val], [min_val, max_val], '--', color='red', label="Predizione Perfetta")
+        ax.plot([min_val, max_val], [min_val, max_val], '--', color='red', label="Perfect Prediction")
 
         ax.set_title(f"Area: {area}\nMSE: {mse:.4f} | RMSE: {rmse:.4f}\nMAE: {mae:.4f} | R²: {r2:.4f}")
         ax.set_xlabel("Real Values")
@@ -247,9 +247,9 @@ def compare_with_baseline(results: dict) -> dict:
         print(f"Model MAE: {model_mae:.4f}")
         print(f"Baseline (Mean Predictor) MAE: {baseline_mae:.4f}")
 
-        if model_mae >= baseline_mae - 0.01: 
-            print("⚠️ Warning: Model is not performing better than the baseline.\n")
-        else:
+        if model_mae >= baseline_mae + 0.01: 
             print("✅ Model is performing better than the baseline.\n")
+        else:
+            print("⚠️ Warning: Model is not performing better than the baseline.\n")
 
     return summary
