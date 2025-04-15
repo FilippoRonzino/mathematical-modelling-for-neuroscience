@@ -52,7 +52,7 @@ def apply_kmeans_clustering(dataset: pd.DataFrame, n_clusters: int, x_col: str =
     kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
     dataset['KMeans_Cluster'] = kmeans.fit_predict(X)
 
-    plt.figure(figsize=(12, 4))
+    plt.figure(figsize=(5, 5))
     sns.scatterplot(x=dataset[x_col], y=dataset[y_col], hue=dataset['KMeans_Cluster'],
                     palette='viridis', legend=False)
     plt.xscale('log')  
@@ -78,7 +78,7 @@ def apply_hierarchical_clustering(dataset: pd.DataFrame, n_clusters: int, x_col:
     agglo = AgglomerativeClustering(n_clusters=n_clusters)
     dataset['Hierarchical_Cluster'] = agglo.fit_predict(X)
 
-    plt.figure(figsize=(12, 4))
+    plt.figure(figsize=(5, 5))
     sns.scatterplot(x=dataset[x_col], y=dataset[y_col], hue=dataset['Hierarchical_Cluster'],
                     palette='coolwarm', legend=False)
     plt.xscale('log')  
@@ -202,11 +202,11 @@ def evaluate_and_plot_results(results: dict, n_cols: int = 3, figsize_per_plot: 
         print(f"  R^2 Score: {r2:.4f}\n")
 
         ax = axs[idx]
-        ax.scatter(Y_test, Y_pred, alpha=0.7, label="Predizioni")
+        ax.scatter(Y_test, Y_pred, alpha=0.7, label="Prediction")
 
         min_val = min(min(Y_test), min(Y_pred))
         max_val = max(max(Y_test), max(Y_pred))
-        ax.plot([min_val, max_val], [min_val, max_val], '--', color='red', label="Predizione Perfetta")
+        ax.plot([min_val, max_val], [min_val, max_val], '--', color='red', label="Perfect Prediction")
 
         ax.set_title(f"Area: {area}\nMSE: {mse:.4f} | RMSE: {rmse:.4f}\nMAE: {mae:.4f} | R²: {r2:.4f}")
         ax.set_xlabel("Real Values")
@@ -247,9 +247,9 @@ def compare_with_baseline(results: dict) -> dict:
         print(f"Model MAE: {model_mae:.4f}")
         print(f"Baseline (Mean Predictor) MAE: {baseline_mae:.4f}")
 
-        if model_mae >= baseline_mae - 0.01: 
-            print("⚠️ Warning: Model is not performing better than the baseline.\n")
+        if model_mae >= baseline_mae: 
+            print(f"✅ Model is performing better than the baseline. Delta: {model_mae-baseline_mae}\n")
         else:
-            print("✅ Model is performing better than the baseline.\n")
+            print("⚠️ Warning: Model is not performing better than the baseline.\n")
 
     return summary
