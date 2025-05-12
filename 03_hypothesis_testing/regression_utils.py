@@ -54,6 +54,14 @@ def fit_and_test_models(X, y, unit_id, area, covariate, plot=False):
     r2_sin = r2_score(y, y_pred_sin)
     f_stat = (r2_sin / 2) / ((1 - r2_sin) / (n - 3))
     p_value_sin = 1 - stats.f.cdf(f_stat, 2, n-3)
+
+    residuals_linear = y - y_pred_linear
+    residuals_sin = y - y_pred_sin
+
+    # test normality of residuals
+    _, p_value_linear_residuals = stats.shapiro(residuals_linear)
+    _, p_value_sin_residuals = stats.shapiro(residuals_sin)
+
     
     if plot:
         # Calculate mean y for each unique x value
@@ -88,13 +96,37 @@ def fit_and_test_models(X, y, unit_id, area, covariate, plot=False):
         plt.tight_layout()
         plt.show()
 
+        # Plot residuals qqplot
+        fig = plt.figure(figsize=(6, 4))
+        res = stats.probplot(residuals_linear, dist="norm", plot=None)
+        ax = fig.add_subplot(111)
+        ax.plot(res[0][0], res[1][0] * res[0][0] + res[1][1], color='red', linewidth=2)
+        ax.scatter(res[0][0], res[0][1], color='tab:blue', alpha=0.5)
+        plt.title(f'QQ Plot of Linear Residuals: unit {unit_id}, area {area}')
+        plt.xlabel('Theoretical Quantiles')
+        plt.ylabel('Sample Quantiles')
+        plt.tight_layout()
+        plt.show()
+        fig = plt.figure(figsize=(6, 4))
+        res = stats.probplot(residuals_sin, dist="norm", plot=None)
+        ax = fig.add_subplot(111)
+        ax.plot(res[0][0], res[1][0] * res[0][0] + res[1][1], color='red', linewidth=2)
+        ax.scatter(res[0][0], res[0][1], color='tab:blue', alpha=0.5)
+        plt.title(f'QQ Plot of Sinusoidal Residuals: unit {unit_id}, area {area}')
+        plt.xlabel('Theoretical Quantiles')
+        plt.ylabel('Sample Quantiles')
+        plt.tight_layout()
+        plt.show()
+
     return {
         'linear_r2': r2_linear,
         'linear_p_value': p_value_linear,
         'slope': slope,
         'slope_direction': 'positive' if slope > 0 else 'negative',
         'sin_r2': r2_sin,
-        'sin_p_value': p_value_sin
+        'sin_p_value': p_value_sin,
+        'linear_p_value_residuals': p_value_linear_residuals,
+        'sin_p_value_residuals': p_value_sin_residuals
     }
 
 def analyse_area(dataset, area, covariate, plot):
@@ -152,11 +184,15 @@ def summarise_area(dataset, area, covariate, alpha=0.05, plot=False):
     n_positive = len(df[(df['slope_direction'] == 'positive') & (df['linear_p_value'] < alpha)])
     n_negative = n_linear_significant - n_positive
     n_sin_significant = len(df[df['sin_p_value'] < alpha])
+    normal_residuals = len(df[df['linear_p_value_residuals'] > alpha])
+    sin_normal_residuals = len(df[df['sin_p_value_residuals'] > alpha])
     return {
         'n_units': n_units,
         'n_linear_significant': n_linear_significant,
         'n_positive': n_positive,
         'n_negative': n_negative,
-        'n_sin_significant': n_sin_significant
+        'n_sin_significant': n_sin_significant,
+        'linear_normality_residuals': normal_residuals,
+        'sin_normality_residuals': sin_normal_residuals
     }
 
