@@ -1,8 +1,10 @@
+<div align="center">
+  
 # Neural Responses to Visual Stimuli: The Role of Temporal Frequency, Spatial Frequency, and Orientation
-Group project for the BAI course 30563 - Mathematical Modelling for Neuroscience
+### 30563 - Mathematical Modelling for Neuroscience, Bocconi University
+### Edoardo Ghirardo, Giuseppe Iannone, Francois Maurice Marie Hoche, Filippo Antonio Ronzino, Elisa Tofanelli.
 
-## Group members
-Edoardo Ghirardo, Giuseppe Iannone, Francois Maurice Marie Hoche, Filippo Antonio Ronzino, Elisa Tofanelli.
+</div>
 
 ## Structure
 - `00_session_analysis.ipynb`: Initial session analysis notebook
